@@ -3,135 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat Interface</title>
+    <title>Tic Tac Toe</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
+            justify-content: center;
             height: 100vh;
             margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
         }
-        #chat-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            max-height: 600px;
+        h1 {
+            margin-bottom: 20px;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background-color: white;
+            border: 2px solid #333;
+            cursor: pointer;
         }
-        #messages {
-            flex-grow: 1;
-            padding: 10px;
-            overflow-y: auto;
-            border-bottom: 1px solid #ddd;
+        .cell:hover {
+            background-color: #f9f9f9;
         }
-        .message {
-            margin: 5px 0;
-            padding: 8px;
-            border-radius: 5px;
+        .winner {
+            color: green;
         }
-        .user {
-            background-color: #cce5ff;
-            align-self: flex-end;
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
         }
-        .bot {
-            background-color: #d4edda;
-            align-self: flex-start;
-        }
-        #input-container {
-            display: flex;
-            padding: 10px;
-        }
-        #input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        #send-btn {
-            margin-left: 10px;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
+        #reset-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>Simple Chat Interface</h1>
-    <div id="chat-container">
-        <div id="messages">
-            <div class="message bot">Hello! How can I assist you today?</div>
-            <div class="message user">What is the weather like?</div>
-            <div class="message bot">It's sunny and warm today!</div>
-        </div>
-        <div id="input-container">
-            <input type="text" id="input" placeholder="Type your message..." />
-            <button id="send-btn">Send</button>
-        </div>
-    </div>
-    
+    <h1>Tic Tac Toe</h1>
+    <div id="board"></div>
+    <div id="status"></div>
+    <button id="reset-btn">Reset Game</button>
+
     <script>
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('send-btn');
-        const messagesContainer = document.getElementById('messages');
+        const board = document.getElementById('board');
+        const statusDisplay = document.getElementById('status');
+        const resetButton = document.getElementById('reset-btn');
+        
+        let boardState = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
 
-        const botResponses = {
-            "weather": "I can't check the weather, but it's usually great!",
-            "hello": "Hi there! How can I help you?",
-            "help": "Sure! What do you need help with?",
-            "bye": "Goodbye! Have a great day!",
-        };
+        const winningConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
 
-        sendBtn.addEventListener('click', () => {
-            const userMessage = input.value.trim();
-            if (userMessage) {
-                // Create user message element
-                const userDiv = document.createElement('div');
-                userDiv.classList.add('message', 'user');
-                userDiv.textContent = userMessage;
-                messagesContainer.appendChild(userDiv);
-
-                // Clear input
-                input.value = '';
-
-                // Scroll to bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-                // Generate bot response
-                const botResponse = getBotResponse(userMessage.toLowerCase());
-                const botDiv = document.createElement('div');
-                botDiv.classList.add('message', 'bot');
-                botDiv.textContent = botResponse;
-                messagesContainer.appendChild(botDiv);
-                
-                // Scroll to bottom again
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        function createBoard() {
+            board.innerHTML = '';
+            boardState = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            statusDisplay.textContent = `Current Player: ${currentPlayer}`;
+            
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-cell-index', i);
+                cell.addEventListener('click', handleCellClick);
+                board.appendChild(cell);
             }
-        });
+        }
 
-        // Optional: Send message on Enter key press
-        input.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                sendBtn.click();
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
+
+            if (boardState[clickedCellIndex] !== '' || !gameActive) {
+                return;
             }
-        });
 
-        function getBotResponse(message) {
-            for (const key in botResponses) {
-                if (message.includes(key)) {
-                    return botResponses[key];
+            boardState[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+
+            checkResult();
+        }
+
+        function checkResult() {
+            let roundWon = false;
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (boardState[a] === '' || boardState[b] === '' || boardState[c] === '') {
+                    continue;
+                }
+                if (boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                    roundWon = true;
+                    break;
                 }
             }
-            return "I'm not sure how to respond to that.";
+
+            if (roundWon) {
+                statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
+                gameActive = false;
+                return;
+            }
+
+            if (!boardState.includes('')) {
+                statusDisplay.textContent = "It's a Draw!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusDisplay.textContent = `Current Player: ${currentPlayer}`;
         }
+
+        resetButton.addEventListener('click', createBoard);
+
+        createBoard();
     </script>
 </body>
 </html>
